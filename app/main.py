@@ -1,13 +1,20 @@
-from fastapi import Depends, FastAPI, HTTPException
+from fastapi import Depends, FastAPI, HTTPException, Query
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
 
 from app.auth import create_access_token, get_current_user
 from app.config import settings
-from app.schemas import ApiResponse, LoginData, LoginRequest, UserPublic
-from app.users import UserRecord, authenticate
+from app.schemas import (
+    ApiResponse,
+    AppUserItem,
+    AppUserListData,
+    LoginData,
+    LoginRequest,
+    UserPublic,
+)
+from app.users import UserRecord, authenticate, list_uni_app_users, record_login
 
-app = FastAPI(title=settings.app_name, version="0.1.0")
+app = FastAPI(title=settings.app_name, version="0.2.0")
 
 app.add_middleware(
     CORSMiddleware,
@@ -36,6 +43,18 @@ def to_public(user: UserRecord) -> UserPublic:
     )
 
 
+def to_app_user(user: UserRecord) -> AppUserItem:
+    return AppUserItem(
+        id=user.id,
+        username=user.username,
+        nickname=user.nickname,
+        avatar=user.avatar,
+        last_login_at=user.last_login_at,
+        login_source=user.last_login_source,
+        login_count=user.login_count,
+    )
+
+
 @app.exception_handler(HTTPException)
 async def http_exception_handler(_request, exc: HTTPException):
     return fail(exc.status_code, str(exc.detail))
@@ -52,6 +71,7 @@ def login(payload: LoginRequest):
     if user is None:
         return fail(401, "用户名或密码错误")
 
+    user = record_login(user.id, payload.source) or user
     token = create_access_token(user.id)
     data = LoginData(
         token=token,
@@ -64,3 +84,23 @@ def login(payload: LoginRequest):
 @app.get("/api/auth/me")
 def me(current_user: UserRecord = Depends(get_current_user)):
     return ok(to_public(current_user).model_dump())
+
+
+@app.get("/api/admin/app-users")
+def admin_app_users(
+    page: int = Query(default=1, ge=1),
+    page_size: int = Query(default=20, ge=1, le=100, alias="pageSize"),
+    keyword: str = Query(default=""),
+):
+    users, total = list_uni_app_users(keyword=keyword, page=page, page_size=page_size)
+    payload = AppUserListData(
+        items=[to_app_user(user) for user in users],
+        total=total,
+    )
+    # Vben request client expects { code: 0, data: { items, total } }.
+    return {
+        "code": 0,
+        "message": "ok",
+        "msg": "ok",
+        "data": payload.model_dump(),
+    }

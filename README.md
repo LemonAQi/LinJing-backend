@@ -59,12 +59,15 @@ python -m pip install -r requirements.txt
 python -m uvicorn app.main:app --reload --host 127.0.0.1 --port 8000
 ```
 
+用户数据保存在 SQLite（默认 `data/linjing.db`，可用环境变量 `DB_PATH` 覆盖）。首次启动会写入演示账号。从 uni-app 登录成功后会记录 `last_login_at`，供后台列表展示。
+
 ## 演示账号
 
 | 用户名 | 密码 | 说明 |
 | --- | --- | --- |
-| alex | 123456 | 首页默认用户 |
-| admin | admin123 | 管理员 |
+| fluie | 123456 | Fluie Grant，联调主账号 |
+| alex | 123456 | 首页演示用户 |
+| admin | admin123 | 演示账号（应用用户，不是 vben 后台账号） |
 
 生产环境请通过 `JWT_SECRET` 覆盖默认密钥，不要使用仓库中的开发默认值。
 
@@ -106,6 +109,33 @@ Header: `Authorization: Bearer <token>`
 ### `GET /health`
 
 服务探活。
+
+### `GET /api/admin/app-users`
+
+列出已从 uni-app 登录过的用户，供 LinJing-backmanage 使用。查询参数：`page`、`pageSize`、`keyword`。
+
+成功响应（Vben 约定 `code: 0`）：
+
+```json
+{
+  "code": 0,
+  "message": "ok",
+  "data": {
+    "items": [
+      {
+        "id": 3,
+        "username": "fluie",
+        "nickname": "Fluie Grant",
+        "avatar": "...",
+        "last_login_at": "2026-09-19T06:00:00+00:00",
+        "login_source": "uni",
+        "login_count": 1
+      }
+    ],
+    "total": 1
+  }
+}
+```
 
 ## 测试
 
