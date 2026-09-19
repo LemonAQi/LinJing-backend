@@ -4,7 +4,7 @@ from pydantic import BaseModel, Field
 class LoginRequest(BaseModel):
     username: str = Field(min_length=1, max_length=64)
     password: str = Field(min_length=1, max_length=128)
-    source: str = Field(default="app", min_length=1, max_length=32)
+    source: str = Field(default="web", min_length=1, max_length=32)
 
 
 class UserPublic(BaseModel):

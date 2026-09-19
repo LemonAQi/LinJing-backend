@@ -13,8 +13,7 @@ from app.schemas import (
     UserPublic,
 )
 from app.users import (
-    APP_LOGIN_SOURCE,
-    APP_LOGIN_SOURCES,
+    WEB_LOGIN_SOURCE,
     UserRecord,
     authenticate,
     list_app_users,
@@ -57,11 +56,7 @@ def to_app_user(user: UserRecord) -> AppUserItem:
         nickname=user.nickname,
         avatar=user.avatar,
         last_login_at=user.last_login_at,
-        login_source=(
-            APP_LOGIN_SOURCE
-            if user.last_login_source in APP_LOGIN_SOURCES
-            else user.last_login_source
-        ),
+        login_source=user.last_login_source or WEB_LOGIN_SOURCE,
         login_count=user.login_count,
     )
 

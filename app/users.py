@@ -11,8 +11,8 @@ from app.config import settings
 
 pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
 
-APP_LOGIN_SOURCE = "app"
-APP_LOGIN_SOURCES = ("app", "uni")
+WEB_LOGIN_SOURCE = "web"
+LISTABLE_LOGIN_SOURCES = ("web", "h5", "browser", "app", "uni")
 
 
 @dataclass
@@ -145,13 +145,13 @@ def get_user_by_username(username: str) -> UserRecord | None:
 
 
 def normalize_login_source(source: str | None) -> str:
-    raw = (source or APP_LOGIN_SOURCE).strip().lower()
-    if raw in {"uni", "uni-app", "uniapp"}:
-        return APP_LOGIN_SOURCE
-    return raw or APP_LOGIN_SOURCE
+    raw = (source or WEB_LOGIN_SOURCE).strip().lower()
+    if raw in {"uni", "uni-app", "uniapp", "h5", "browser"}:
+        return WEB_LOGIN_SOURCE
+    return raw or WEB_LOGIN_SOURCE
 
 
-def record_login(user_id: int, source: str = APP_LOGIN_SOURCE) -> UserRecord | None:
+def record_login(user_id: int, source: str = WEB_LOGIN_SOURCE) -> UserRecord | None:
     now = datetime.now(timezone.utc).isoformat()
     login_source = normalize_login_source(source)
     with _connect() as conn:
@@ -176,9 +176,9 @@ def list_app_users(
     page = max(page, 1)
     page_size = min(max(page_size, 1), 100)
     offset = (page - 1) * page_size
-    placeholders = ", ".join("?" for _ in APP_LOGIN_SOURCES)
+    placeholders = ", ".join("?" for _ in LISTABLE_LOGIN_SOURCES)
     filters = [f"last_login_source IN ({placeholders})", "last_login_at IS NOT NULL"]
-    params: list[object] = list(APP_LOGIN_SOURCES)
+    params: list[object] = list(LISTABLE_LOGIN_SOURCES)
     trimmed = keyword.strip()
     if trimmed:
         filters.append("(username LIKE ? OR nickname LIKE ?)")

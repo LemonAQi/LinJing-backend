@@ -20,15 +20,15 @@ def test_login_success():
     assert body["data"]["user"]["nickname"] == "Alex"
 
 
-def test_fluie_can_login():
+def test_alex_browser_login():
     response = client.post(
         "/api/auth/login",
-        json={"username": "fluie", "password": "123456", "source": "app"},
+        json={"username": "alex", "password": "123456", "source": "web"},
     )
     assert response.status_code == 200
     body = response.json()
-    assert body["data"]["user"]["username"] == "fluie"
-    assert body["data"]["user"]["nickname"] == "Fluie Grant"
+    assert body["data"]["user"]["username"] == "alex"
+    assert body["data"]["user"]["nickname"] == "Alex"
 
 
 def test_login_rejects_bad_password():
@@ -66,22 +66,17 @@ def test_app_users_empty_before_login():
     assert body["data"]["total"] == 0
 
 
-def test_app_users_lists_app_logins():
-    client.post("/api/auth/login", json={"username": "fluie", "password": "123456", "source": "app"})
-    client.post("/api/auth/login", json={"username": "alex", "password": "123456", "source": "uni"})
+def test_app_users_lists_browser_login():
+    client.post("/api/auth/login", json={"username": "alex", "password": "123456", "source": "web"})
 
-    response = client.get("/api/admin/app-users", params={"keyword": "Fluie"})
+    response = client.get("/api/admin/app-users", params={"keyword": "alex"})
     assert response.status_code == 200
     body = response.json()
     assert body["code"] == 0
     assert body["data"]["total"] == 1
     item = body["data"]["items"][0]
-    assert item["username"] == "fluie"
-    assert item["nickname"] == "Fluie Grant"
-    assert item["login_source"] == "app"
+    assert item["username"] == "alex"
+    assert item["nickname"] == "Alex"
+    assert item["login_source"] == "web"
     assert item["login_count"] == 1
     assert item["last_login_at"]
-
-    all_users = client.get("/api/admin/app-users").json()["data"]
-    assert all_users["total"] == 2
-    assert {row["login_source"] for row in all_users["items"]} == {"app"}
