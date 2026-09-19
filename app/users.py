@@ -11,7 +11,8 @@ from app.config import settings
 
 pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
 
-UNI_LOGIN_SOURCE = "uni"
+APP_LOGIN_SOURCE = "app"
+APP_LOGIN_SOURCES = ("app", "uni")
 
 
 @dataclass
@@ -143,9 +144,16 @@ def get_user_by_username(username: str) -> UserRecord | None:
     return _row_to_user(row) if row else None
 
 
-def record_login(user_id: int, source: str = UNI_LOGIN_SOURCE) -> UserRecord | None:
+def normalize_login_source(source: str | None) -> str:
+    raw = (source or APP_LOGIN_SOURCE).strip().lower()
+    if raw in {"uni", "uni-app", "uniapp"}:
+        return APP_LOGIN_SOURCE
+    return raw or APP_LOGIN_SOURCE
+
+
+def record_login(user_id: int, source: str = APP_LOGIN_SOURCE) -> UserRecord | None:
     now = datetime.now(timezone.utc).isoformat()
-    login_source = (source or UNI_LOGIN_SOURCE).strip() or UNI_LOGIN_SOURCE
+    login_source = normalize_login_source(source)
     with _connect() as conn:
         conn.execute(
             """
@@ -159,7 +167,7 @@ def record_login(user_id: int, source: str = UNI_LOGIN_SOURCE) -> UserRecord | N
     return get_user_by_id(user_id)
 
 
-def list_uni_app_users(
+def list_app_users(
     *,
     keyword: str = "",
     page: int = 1,
@@ -168,8 +176,9 @@ def list_uni_app_users(
     page = max(page, 1)
     page_size = min(max(page_size, 1), 100)
     offset = (page - 1) * page_size
-    filters = ["last_login_source = ?", "last_login_at IS NOT NULL"]
-    params: list[object] = [UNI_LOGIN_SOURCE]
+    placeholders = ", ".join("?" for _ in APP_LOGIN_SOURCES)
+    filters = [f"last_login_source IN ({placeholders})", "last_login_at IS NOT NULL"]
+    params: list[object] = list(APP_LOGIN_SOURCES)
     trimmed = keyword.strip()
     if trimmed:
         filters.append("(username LIKE ? OR nickname LIKE ?)")

@@ -12,7 +12,14 @@ from app.schemas import (
     LoginRequest,
     UserPublic,
 )
-from app.users import UserRecord, authenticate, list_uni_app_users, record_login
+from app.users import (
+    APP_LOGIN_SOURCE,
+    APP_LOGIN_SOURCES,
+    UserRecord,
+    authenticate,
+    list_app_users,
+    record_login,
+)
 
 app = FastAPI(title=settings.app_name, version="0.2.0")
 
@@ -50,7 +57,11 @@ def to_app_user(user: UserRecord) -> AppUserItem:
         nickname=user.nickname,
         avatar=user.avatar,
         last_login_at=user.last_login_at,
-        login_source=user.last_login_source,
+        login_source=(
+            APP_LOGIN_SOURCE
+            if user.last_login_source in APP_LOGIN_SOURCES
+            else user.last_login_source
+        ),
         login_count=user.login_count,
     )
 
@@ -92,7 +103,7 @@ def admin_app_users(
     page_size: int = Query(default=20, ge=1, le=100, alias="pageSize"),
     keyword: str = Query(default=""),
 ):
-    users, total = list_uni_app_users(keyword=keyword, page=page, page_size=page_size)
+    users, total = list_app_users(keyword=keyword, page=page, page_size=page_size)
     payload = AppUserListData(
         items=[to_app_user(user) for user in users],
         total=total,

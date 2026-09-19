@@ -23,7 +23,7 @@ def test_login_success():
 def test_fluie_can_login():
     response = client.post(
         "/api/auth/login",
-        json={"username": "fluie", "password": "123456", "source": "uni"},
+        json={"username": "fluie", "password": "123456", "source": "app"},
     )
     assert response.status_code == 200
     body = response.json()
@@ -66,8 +66,8 @@ def test_app_users_empty_before_login():
     assert body["data"]["total"] == 0
 
 
-def test_app_users_lists_uni_logins():
-    client.post("/api/auth/login", json={"username": "fluie", "password": "123456", "source": "uni"})
+def test_app_users_lists_app_logins():
+    client.post("/api/auth/login", json={"username": "fluie", "password": "123456", "source": "app"})
     client.post("/api/auth/login", json={"username": "alex", "password": "123456", "source": "uni"})
 
     response = client.get("/api/admin/app-users", params={"keyword": "Fluie"})
@@ -78,6 +78,10 @@ def test_app_users_lists_uni_logins():
     item = body["data"]["items"][0]
     assert item["username"] == "fluie"
     assert item["nickname"] == "Fluie Grant"
-    assert item["login_source"] == "uni"
+    assert item["login_source"] == "app"
     assert item["login_count"] == 1
     assert item["last_login_at"]
+
+    all_users = client.get("/api/admin/app-users").json()["data"]
+    assert all_users["total"] == 2
+    assert {row["login_source"] for row in all_users["items"]} == {"app"}
