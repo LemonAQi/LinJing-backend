@@ -12,7 +12,6 @@ from app.config import settings
 pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
 
 WEB_LOGIN_SOURCE = "web"
-LISTABLE_LOGIN_SOURCES = ("web", "h5", "browser", "app", "uni")
 
 
 @dataclass
@@ -176,9 +175,8 @@ def list_app_users(
     page = max(page, 1)
     page_size = min(max(page_size, 1), 100)
     offset = (page - 1) * page_size
-    placeholders = ", ".join("?" for _ in LISTABLE_LOGIN_SOURCES)
-    filters = [f"last_login_source IN ({placeholders})", "last_login_at IS NOT NULL"]
-    params: list[object] = list(LISTABLE_LOGIN_SOURCES)
+    filters = ["last_login_at IS NOT NULL"]
+    params: list[object] = []
     trimmed = keyword.strip()
     if trimmed:
         filters.append("(username LIKE ? OR nickname LIKE ?)")

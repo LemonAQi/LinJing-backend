@@ -1,3 +1,5 @@
+from contextlib import asynccontextmanager
+
 from fastapi import Depends, FastAPI, HTTPException, Query
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
@@ -20,7 +22,17 @@ from app.users import (
     record_login,
 )
 
-app = FastAPI(title=settings.app_name, version="0.2.0")
+@asynccontextmanager
+async def lifespan(_app: FastAPI):
+    print("[LinJing] API started", flush=True)
+    print("[LinJing] Health     http://127.0.0.1:8000/health", flush=True)
+    print("[LinJing] Login      POST /api/auth/login", flush=True)
+    print("[LinJing] App users  GET  /api/admin/app-users", flush=True)
+    yield
+    print("[LinJing] API stopped", flush=True)
+
+
+app = FastAPI(title=settings.app_name, version="0.2.0", lifespan=lifespan)
 
 app.add_middleware(
     CORSMiddleware,

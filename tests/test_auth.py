@@ -66,6 +66,13 @@ def test_app_users_empty_before_login():
     assert body["data"]["total"] == 0
 
 
+def test_app_users_lists_default_login_source():
+    client.post("/api/auth/login", json={"username": "alex", "password": "123456"})
+    item = client.get("/api/admin/app-users").json()["data"]["items"][0]
+    assert item["username"] == "alex"
+    assert item["last_login_at"]
+
+
 def test_app_users_lists_browser_login():
     client.post("/api/auth/login", json={"username": "alex", "password": "123456", "source": "web"})
 

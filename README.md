@@ -24,19 +24,25 @@ py --version
 
 若这条也失败，先从 https://www.python.org/downloads/windows/ 安装 Python，安装时勾选 **Add python.exe to PATH**，然后重开终端。
 
-在项目根目录执行：
+在项目根目录执行（路径大小写以你本机为准，例如 `D:\java\work\Linjing-backend`）：
 
 ```powershell
-cd D:\java\work\LinJing-backend
-git checkout cursor/user-login-api-fb5e
-git pull origin cursor/user-login-api-fb5e
+cd D:\java\work\Linjing-backend
+git fetch origin
+git checkout cursor/uni-login-users-d4b8
+git pull origin cursor/uni-login-users-d4b8
 
-py -m venv .venv
-.\.venv\Scripts\Activate.ps1
-python -m pip install -U pip
-python -m pip install -r requirements.txt
+.\setup.ps1
+.\start-dev.ps1
+```
+
+启动成功必须看到 `[LinJing] API started` 和 `Uvicorn running on http://127.0.0.1:8000`。如果命令立刻回到提示符且没有输出，说明用到了 Windows 商店的 `python` 别名，或当前目录没有 `app\main.py`（还在 `main` 空仓库上）。不要再直接敲：
+
+```powershell
 python -m uvicorn app.main:app --reload --host 127.0.0.1 --port 8000
 ```
+
+请改用 `.\start-dev.ps1`，它会走 `.venv\Scripts\python.exe`。
 
 如果激活脚本被拦截（`running scripts is disabled`）：
 
